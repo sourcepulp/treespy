@@ -1,0 +1,21 @@
+package com.sourcepulp.treespy;
+
+import java.io.File;
+import java.io.IOException;
+
+public class Main {
+
+	public static void main(String[] args) throws IOException {
+		
+		TreeSpy spy = new TreeSpy();
+		
+		String directory = System.getProperty("user.home");
+		
+		File home = new File(directory);
+		
+		spy.spy(home, (changedFile, eventType) -> {
+			System.out.println(String.format("File %s changed", changedFile));
+		});
+		
+	}
+}
