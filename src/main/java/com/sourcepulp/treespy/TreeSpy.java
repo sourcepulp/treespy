@@ -47,6 +47,7 @@ public class TreeSpy {
 		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 			WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 			watchKeysToDirectories.put(key, dir);
+			log.info("Registering " + dir.toString());
 			return FileVisitResult.CONTINUE;
 		}
 

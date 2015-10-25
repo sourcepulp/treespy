@@ -1,5 +1,7 @@
 package com.sourcepulp.treespy;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
 
@@ -15,7 +17,10 @@ class TreeSpyThreadFactory implements ThreadFactory {
 		
 		@Override
 		public void uncaughtException(Thread t, Throwable e) {
-			log.warn(e.getMessage());
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			log.warn(sw.toString());
 		}
 	};
 

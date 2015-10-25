@@ -17,5 +17,7 @@ public class Main {
 			System.out.println(String.format("File %s changed", changedFile));
 		});
 		
+		System.in.read();
+		
 	}
 }
