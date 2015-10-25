@@ -13,7 +13,7 @@ public class Main {
 		
 		File home = new File(directory);
 		
-		spy.spy(home, (changedFile, eventType) -> {
+		spy.watch(home, (changedFile, eventType) -> {
 			System.out.println(String.format("File %s changed", changedFile));
 		});
 		

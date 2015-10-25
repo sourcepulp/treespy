@@ -26,7 +26,7 @@ public class AppTest
     	
     	File directory = new File(homeDir);
     	
-    	watcher.spy(directory, (f,t) -> {
+    	watcher.watch(directory, (f,t) -> {
     		if(t == Events.CREATE) {
     			System.out.println(String.format("Created file %s", f.toString()));   			
     		}

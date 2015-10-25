@@ -82,11 +82,11 @@ public class TreeSpy {
 		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
 	}
 
-	public void spy(File directory, TreeSpyListener callback) throws IOException {
-		this.spy(directory, callback, true);
+	public void watch(File directory, TreeSpyListener callback) throws IOException {
+		this.watch(directory, callback, true);
 	}
 
-	public void spy(File directory, TreeSpyListener callback, boolean recurse) throws IOException {
+	public void watch(File directory, TreeSpyListener callback, boolean recurse) throws IOException {
 		if (!directory.isDirectory())
 			throw new IllegalArgumentException("Path must be a directory");
 
