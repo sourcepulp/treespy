@@ -12,11 +12,11 @@ import org.junit.Test;
  */
 public class AppTest 
 {
-	TreeSpy watcher;
+	TreeSpy spy;
 	
 	@Before
 	public void setup() throws IOException {
-		watcher = new TreeSpy();
+		spy = new TreeSpy();
 	}
 	
     @Test
@@ -26,7 +26,7 @@ public class AppTest
     	
     	File directory = new File(homeDir);
     	
-    	watcher.watch(directory, (f,t) -> {
+    	spy.watch(directory, (f,t) -> {
     		if(t == Events.CREATE) {
     			System.out.println(String.format("Created file %s", f.toString()));   			
     		}
