@@ -1,9 +1,8 @@
 package com.sourcepulp.treespy;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,16 +26,13 @@ public class AppTest
     	
     	File directory = new File(homeDir);
     	
-    	AtomicBoolean hold = new AtomicBoolean(true);
-    	
     	watcher.spy(directory, (f,t) -> {
     		if(t == Events.CREATE) {
-    			System.out.println(String.format("Created file %s", f.toString()));
-    			hold.set(false);
+    			System.out.println(String.format("Created file %s", f.toString()));   			
     		}
     	});
     	
-    	while(hold.get());
+    	// TODO: Work out some way to test concurrently :s
     	
     	assertTrue( true );
     }
