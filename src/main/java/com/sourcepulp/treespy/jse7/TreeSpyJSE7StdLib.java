@@ -43,7 +43,7 @@ import com.sourcepulp.treespy.TreeSpyListener;
  */
 public class TreeSpyJSE7StdLib implements TreeSpy {
 
-	private final Logger log = LoggerFactory.getLogger(TreeSpyJSE7StdLib.class);
+	private final Logger log = LoggerFactory.getLogger(TreeSpy.class);
 
 	private WatchService watcher;
 
@@ -123,7 +123,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 				directoriesToListeners.get(dir).add(listener);
 
-				log.info("Registering " + dir.toString());
+				log.debug("Registering " + dir.toString());
 				return FileVisitResult.CONTINUE;
 			}
 
