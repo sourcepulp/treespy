@@ -55,7 +55,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	private Executor executor;
 
 	/**
-	 * Constructs a directory spy using the provided threadfactory. This
+	 * Constructs a directory spy using the provided executor. This
 	 * constructor is provided should somebody wish to maintain greater control
 	 * over the background thread used for watching.
 	 * 
