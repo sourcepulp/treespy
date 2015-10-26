@@ -1,5 +1,5 @@
 # treespy
-Simplified, zero dependency recursive directory watching API for Java
+Simplified, zero dependency recursive directory watching API for Java SE 7+
     
     TreeSpy spy = new TreeSpy();
     
