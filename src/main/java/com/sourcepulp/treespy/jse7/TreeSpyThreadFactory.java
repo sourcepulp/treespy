@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class TreeSpyThreadFactory implements ThreadFactory {
+public class TreeSpyThreadFactory implements ThreadFactory {
 	
 	private Logger log = LoggerFactory.getLogger(TreeSpyThreadFactory.class);
 	private final static ThreadGroup group = new ThreadGroup("TreeSpyThreadGroup");

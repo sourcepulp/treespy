@@ -1,7 +1,10 @@
 package com.sourcepulp.treespy.jse7;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardWatchEventKinds.*;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -49,22 +52,18 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
-	private ThreadFactory threadFactory;
-
-	public TreeSpyJSE7StdLib() throws IOException {
-		this(new TreeSpyThreadFactory());
-	}
+	private Executor executor;
 
 	/**
 	 * Constructs a directory spy using the provided threadfactory. This
 	 * constructor is provided should somebody wish to maintain greater control
 	 * over the background thread used for watching.
 	 * 
-	 * @param threadFactory
+	 * @param executor
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(ThreadFactory threadFactory) throws IOException {
-		this.threadFactory = threadFactory;
+	public TreeSpyJSE7StdLib(Executor executor) throws IOException {
+		this.executor = executor;
 		reset();
 	}
 
@@ -171,8 +170,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	}
 
 	public void start() {
-		Thread t = threadFactory.newThread(new WatchServiceRunnable(this));
-		t.start();
+		executor.execute(new WatchServiceRunnable(this));
 		running.set(true);
 		log.info("TreeSpy started spying.");
 	}
