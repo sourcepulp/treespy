@@ -115,8 +115,6 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	private FileVisitor<Path> makeVisitor(final TreeSpyListener listener) {
 		return new SimpleFileVisitor<Path>() {
 
-			TreeSpyListener innerListener = listener;
-
 			@Override
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 				WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW);
@@ -124,7 +122,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 				if (!isListened(dir))
 					directoriesToListeners.put(dir, new LinkedHashSet<TreeSpyListener>());
 
-				directoriesToListeners.get(dir).add(innerListener);
+				directoriesToListeners.get(dir).add(listener);
 
 				log.info("Registering " + dir.toString());
 				return FileVisitResult.CONTINUE;
