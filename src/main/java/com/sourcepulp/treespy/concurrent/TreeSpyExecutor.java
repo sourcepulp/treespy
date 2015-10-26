@@ -1,4 +1,4 @@
-package com.sourcepulp.treespy.jse7;
+package com.sourcepulp.treespy.concurrent;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;

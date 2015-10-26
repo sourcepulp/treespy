@@ -3,6 +3,8 @@ package com.sourcepulp.treespy;
 import java.io.IOException;
 import java.util.concurrent.ThreadFactory;
 
+import com.sourcepulp.treespy.concurrent.TreeSpyExecutor;
+import com.sourcepulp.treespy.concurrent.TreeSpyThreadFactory;
 import com.sourcepulp.treespy.jse7.*;
 
 public class SpyFactory {
