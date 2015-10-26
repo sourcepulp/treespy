@@ -1,12 +1,12 @@
 package com.sourcepulp.treespy.jse7;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -33,6 +33,7 @@ import com.sourcepulp.treespy.TreeSpy;
 import com.sourcepulp.treespy.TreeSpyListener;
 
 /**
+ * Java SE 7 compliant implementation of a directory watching service.
  * 
  * @author Will Faithfull
  *
@@ -42,22 +43,6 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	private final Logger log = LoggerFactory.getLogger(TreeSpyJSE7StdLib.class);
 
 	private WatchService watcher;
-	private FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
-
-		@Override
-		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-			WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-			watchKeysToDirectories.put(key, dir);
-			log.info("Registering " + dir.toString());
-			return FileVisitResult.CONTINUE;
-		}
-
-		@Override
-		public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-			// TODO Auto-generated method stub
-			return FileVisitResult.CONTINUE;
-		}
-	};
 
 	private ConcurrentMap<WatchKey, Path> watchKeysToDirectories;
 	private ConcurrentMap<Path, Set<TreeSpyListener>> directoriesToListeners;
@@ -69,7 +54,15 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	public TreeSpyJSE7StdLib() throws IOException {
 		this(new TreeSpyThreadFactory());
 	}
-	
+
+	/**
+	 * Constructs a directory spy using the provided threadfactory. This
+	 * constructor is provided should somebody wish to maintain greater control
+	 * over the background thread used for watching.
+	 * 
+	 * @param threadFactory
+	 * @throws IOException
+	 */
 	public TreeSpyJSE7StdLib(ThreadFactory threadFactory) throws IOException {
 		this.threadFactory = threadFactory;
 		reset();
@@ -93,12 +86,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 		Path path = directory.toPath();
 		if (!isWatched(path))
-			register(path, recurse);
-
-		if (!isListened(path))
-			directoriesToListeners.put(path, new LinkedHashSet<TreeSpyListener>());
-
-		directoriesToListeners.get(path).add(callback);
+			register(path, callback, recurse);
 
 		if (!running.get())
 			start();
@@ -114,18 +102,48 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		return directoriesToListeners.containsKey(directory);
 	}
 
-	private void register(Path path, boolean all) throws IOException {
+	private void register(Path path, TreeSpyListener listener, boolean all) throws IOException {
+
+		FileVisitor<Path> visitor = makeVisitor(listener);
+
 		if (all)
 			Files.walkFileTree(path, visitor);
 		else
 			visitor.preVisitDirectory(path, Files.readAttributes(path, BasicFileAttributes.class));
 	}
 
+	private FileVisitor<Path> makeVisitor(final TreeSpyListener listener) {
+		return new SimpleFileVisitor<Path>() {
+
+			TreeSpyListener innerListener = listener;
+
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW);
+				watchKeysToDirectories.put(key, dir);
+				if (!isListened(dir))
+					directoriesToListeners.put(dir, new LinkedHashSet<TreeSpyListener>());
+
+				directoriesToListeners.get(dir).add(innerListener);
+
+				log.info("Registering " + dir.toString());
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				exc.printStackTrace(pw);
+				log.warn(sw.toString());
+				return FileVisitResult.SKIP_SUBTREE;
+			}
+		};
+	}
+
 	private void notifyAll(WatchKey key) {
 		Path directory = watchKeysToDirectories.get(key);
-		if(!directoriesToListeners.containsKey(directory))
-			return;
-		
+
 		Set<TreeSpyListener> listeners = directoriesToListeners.get(directory);
 
 		for (WatchEvent<?> event : key.pollEvents()) {
@@ -137,23 +155,26 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 			@SuppressWarnings("rawtypes")
 			Kind kind = event.kind();
 
+			boolean newDirectory = kind == ENTRY_CREATE && Files.isDirectory(child, NOFOLLOW_LINKS);
+
 			for (TreeSpyListener listener : listeners) {
-				log.info("notifying listener");
 				listener.onChange(child, Events.kindToEvent(kind));
-			}
 
-			if (kind == ENTRY_CREATE && Files.isDirectory(child, NOFOLLOW_LINKS)) {
-				try {
-					register(child, true);
-				} catch (IOException ex) {
+				if (newDirectory) {
+					try {
+						register(child, listener, true);
+					} catch (IOException ex) {
 
+					}
 				}
 			}
+
 		}
 	}
 
 	public void start() {
-		threadFactory.newThread(new WatchServiceRunnable(this));
+		Thread t = threadFactory.newThread(new WatchServiceRunnable(this));
+		t.start();
 		running.set(true);
 		log.info("TreeSpy started spying.");
 	}
