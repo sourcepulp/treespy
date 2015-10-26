@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadFactory;
 
 import com.sourcepulp.treespy.concurrent.TreeSpyExecutor;
 import com.sourcepulp.treespy.concurrent.TreeSpyThreadFactory;
-import com.sourcepulp.treespy.jse7.*;
+import com.sourcepulp.treespy.jse7.TreeSpyJSE7StdLib;
 
 public class SpyFactory {
 
