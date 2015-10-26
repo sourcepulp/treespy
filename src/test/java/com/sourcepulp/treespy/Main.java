@@ -7,7 +7,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 		
-		TreeSpy spy = new TreeSpy();
+		TreeSpy spy = SpyFactory.getSpy();
 		
 		String directory = System.getProperty("user.dir");
 		

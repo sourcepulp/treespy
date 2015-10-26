@@ -16,7 +16,7 @@ public class AppTest
 	
 	@Before
 	public void setup() throws IOException {
-		spy = new TreeSpy();
+		spy = SpyFactory.getSpy();
 	}
 	
     @Test

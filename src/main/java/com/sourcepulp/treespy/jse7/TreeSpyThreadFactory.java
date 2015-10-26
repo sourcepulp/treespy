@@ -1,4 +1,4 @@
-package com.sourcepulp.treespy;
+package com.sourcepulp.treespy.jse7;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
