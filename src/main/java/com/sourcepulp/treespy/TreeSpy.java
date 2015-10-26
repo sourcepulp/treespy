@@ -22,10 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -63,15 +60,14 @@ public class TreeSpy {
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
-	private ExecutorService executor;
+	private ThreadFactory threadFactory;
 
 	public TreeSpy() throws IOException {
-		this(new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-				new TreeSpyThreadFactory()));
+		this(new TreeSpyThreadFactory());
 	}
-
-	public TreeSpy(ExecutorService executor) throws IOException {
-		this.executor = executor;
+	
+	public TreeSpy(ThreadFactory threadFactory) throws IOException {
+		this.threadFactory = threadFactory;
 		reset();
 	}
 
@@ -118,11 +114,14 @@ public class TreeSpy {
 		if (all)
 			Files.walkFileTree(path, visitor);
 		else
-			visitor.visitFile(path, Files.readAttributes(path, BasicFileAttributes.class));
+			visitor.preVisitDirectory(path, Files.readAttributes(path, BasicFileAttributes.class));
 	}
 
 	private void notifyAll(WatchKey key) {
 		Path directory = watchKeysToDirectories.get(key);
+		if(!directoriesToListeners.containsKey(directory))
+			return;
+		
 		Set<TreeSpyListener> listeners = directoriesToListeners.get(directory);
 
 		for (WatchEvent<?> event : key.pollEvents()) {
@@ -135,6 +134,7 @@ public class TreeSpy {
 			Kind kind = event.kind();
 
 			for (TreeSpyListener listener : listeners) {
+				log.info("notifying listener");
 				listener.onChange(child, Events.kindToEvent(kind));
 			}
 
@@ -149,14 +149,16 @@ public class TreeSpy {
 	}
 
 	public void start() {
-		executor.execute(new WatchServiceRunnable(this));
+		threadFactory.newThread(new WatchServiceRunnable(this));
 		running.set(true);
 		log.info("TreeSpy started spying.");
 	}
 
 	public void stop() {
-		running.set(false);
-		log.info("TreeSpy stopped spying.");
+		if (running.get()) {
+			running.set(false);
+			log.info("TreeSpy stopped spying.");
+		}
 	}
 
 	private class WatchServiceRunnable implements Runnable {

@@ -9,7 +9,7 @@ public class Main {
 		
 		TreeSpy spy = new TreeSpy();
 		
-		String directory = System.getProperty("user.home");
+		String directory = System.getProperty("user.dir");
 		
 		File home = new File(directory);
 		

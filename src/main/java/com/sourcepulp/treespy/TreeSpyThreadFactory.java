@@ -21,6 +21,8 @@ class TreeSpyThreadFactory implements ThreadFactory {
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			log.warn(sw.toString());
+			
+			t.interrupt();
 		}
 	};
 
@@ -28,6 +30,7 @@ class TreeSpyThreadFactory implements ThreadFactory {
 	public Thread newThread(Runnable arg0) {
 		Thread t = new Thread(group, arg0, "TreeSpy");
 		t.setUncaughtExceptionHandler(handler);
+		t.setDaemon(true);
 		return t;
 	}
 
