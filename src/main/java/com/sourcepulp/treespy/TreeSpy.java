@@ -5,14 +5,46 @@ import java.io.IOException;
 
 public interface TreeSpy {
 
+	/**
+	 * Watches the specified directory and all subdirectories, invoking the
+	 * callback when a change is signalled.
+	 * 
+	 * @param directory
+	 *            The directory to be watched.
+	 * @param callback
+	 *            A TreeSpyListener compliant callback.
+	 * @throws IOException
+	 */
 	public void watch(File directory, TreeSpyListener callback) throws IOException;
 
+	/**
+	 * Watches the specified directory, invoking the callback when a change is
+	 * signalled. If recurse is set to true, then this will recursively watch
+	 * all subdirectories.
+	 * 
+	 * @param directory
+	 *            The directory to be watched.
+	 * @param callback
+	 *            A TreeSpyListener compliant callback.
+	 * @throws IOException
+	 */
 	public void watch(File directory, TreeSpyListener callback, boolean recurse) throws IOException;
-	
+
+	/**
+	 * Manually starts the service.
+	 */
 	public void start();
-	
+
+	/**
+	 * Manually stops the service.
+	 */
 	public void stop();
-	
+
+	/**
+	 * Clears all stored WatchKeys and callbacks.
+	 * 
+	 * @throws IOException
+	 */
 	public void reset() throws IOException;
 
 }

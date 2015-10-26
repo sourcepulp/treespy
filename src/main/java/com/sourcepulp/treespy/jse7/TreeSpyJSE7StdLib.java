@@ -55,9 +55,8 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	private Executor executor;
 
 	/**
-	 * Constructs a directory spy using the provided executor. This
-	 * constructor is provided should somebody wish to maintain greater control
-	 * over the background thread used for watching.
+	 * Constructs a directory spy using the provided executor to orchestrate the
+	 * background task.
 	 * 
 	 * @param executor
 	 * @throws IOException
@@ -67,6 +66,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		reset();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void reset() throws IOException {
 		stop();
 
@@ -75,10 +77,16 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void watch(File directory, TreeSpyListener callback) throws IOException {
 		this.watch(directory, callback, true);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void watch(File directory, TreeSpyListener callback, boolean recurse) throws IOException {
 		if (!directory.isDirectory())
 			throw new IllegalArgumentException("Path must be a directory");
@@ -93,14 +101,44 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		log.info(String.format("Watching %s%s", path.toString(), recurse ? " and subdirectories." : "."));
 	}
 
-	public boolean isWatched(Path directory) {
+	/**
+	 * Indicates whether the specified directory already has a matching
+	 * WatchKey.
+	 * 
+	 * @param directory
+	 *            The path to check.
+	 * @return True if there is an existing WatchKey for the path.
+	 */
+	private boolean isWatched(Path directory) {
 		return watchKeysToDirectories.containsValue(directory);
 	}
 
-	public boolean isListened(Path directory) {
-		return directoriesToListeners.containsKey(directory);
+	/**
+	 * Indicates whether the specified directory already has attached listeners.
+	 * 
+	 * @param directory
+	 *            The path to check.
+	 * @return True if there are attached listeners to the path.
+	 */
+	private boolean isListened(Path directory) {
+		if (directoriesToListeners.containsKey(directory))
+			return !directoriesToListeners.get(directory).isEmpty();
+		return false;
 	}
 
+	/**
+	 * Register the specified listener to the specified path, and recursively
+	 * all subdirectories, if specified by the boolean.
+	 * 
+	 * @param path
+	 *            The path to register the listener against.
+	 * @param listener
+	 *            The listener to be registered.
+	 * @param all
+	 *            Whether or not to recurse and register the listener against
+	 *            all subdirectories of the specified path.
+	 * @throws IOException
+	 */
 	private void register(Path path, TreeSpyListener listener, boolean all) throws IOException {
 
 		FileVisitor<Path> visitor = makeVisitor(listener);
@@ -111,6 +149,16 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 			visitor.preVisitDirectory(path, Files.readAttributes(path, BasicFileAttributes.class));
 	}
 
+	/**
+	 * Creates a FileVisitor that registers the specified callback at all
+	 * directories it visits.
+	 * 
+	 * @param listener
+	 *            A callback to be registered at any directories the visitor
+	 *            visits.
+	 * @return A FileVisitor implementation that registers the callback where it
+	 *         visits.
+	 */
 	private FileVisitor<Path> makeVisitor(final TreeSpyListener listener) {
 		return new SimpleFileVisitor<Path>() {
 
@@ -138,37 +186,45 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		};
 	}
 
+	/**
+	 * Attempts to notify all listeners of the specified key.
+	 * 
+	 * @param key
+	 */
 	private void notifyAll(WatchKey key) {
 		Path directory = watchKeysToDirectories.get(key);
 
 		Set<TreeSpyListener> listeners = directoriesToListeners.get(directory);
 
 		for (WatchEvent<?> event : key.pollEvents()) {
-			@SuppressWarnings("unchecked")
-			WatchEvent<Path> ev = (WatchEvent<Path>) event;
+			// Find the directory or file referenced by this WatchEvent
+			WatchEvent<Path> ev = cast(event);
 			Path filename = ev.context();
 			Path child = directory.resolve(filename);
 
-			@SuppressWarnings("rawtypes")
-			Kind kind = event.kind();
+			Kind<?> kind = event.kind();
 
+			// Find out ahead of time if a new directory has been created.
 			boolean newDirectory = kind == ENTRY_CREATE && Files.isDirectory(child, NOFOLLOW_LINKS);
 
 			for (TreeSpyListener listener : listeners) {
 				listener.onChange(child, Events.kindToEvent(kind));
 
+				// If a new directory was created, register it and any
+				// subdirectories.
 				if (newDirectory) {
 					try {
 						register(child, listener, true);
 					} catch (IOException ex) {
-
+						log.warn(String.format("Could not register %s", child.toString()));
 					}
 				}
 			}
-			
+
+			// Reset key to allow subsequent monitoring.
 			boolean valid = key.reset();
-			
-			if(!valid) {
+
+			if (!valid) {
 				log.warn(String.format("Invalid key - Directory %s is no longer accessible.", directory.toString()));
 				watchKeysToDirectories.remove(key);
 			}
@@ -176,12 +232,30 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		}
 	}
 
+	/**
+	 * Unchecked cast method suggested by the Java 7 SE API documentation for
+	 * {@link java.nio.file.WatcherService}
+	 * 
+	 * @param event
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> WatchEvent<T> cast(WatchEvent<?> event) {
+		return (WatchEvent<T>) event;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 	public void start() {
 		executor.execute(new WatchServiceRunnable(this));
 		running.set(true);
 		log.info("TreeSpy started spying.");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void stop() {
 		if (running.get()) {
 			running.set(false);
@@ -189,6 +263,13 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		}
 	}
 
+	/**
+	 * Runnable implementation for the background daemon thread. Can be lazily
+	 * killed by setting the AtomicBoolean in the outer class.
+	 * 
+	 * @author wfaithfull
+	 *
+	 */
 	private class WatchServiceRunnable implements Runnable {
 
 		TreeSpyJSE7StdLib spy;
