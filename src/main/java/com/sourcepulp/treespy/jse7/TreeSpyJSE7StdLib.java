@@ -165,6 +165,13 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 					}
 				}
 			}
+			
+			boolean valid = key.reset();
+			
+			if(!valid) {
+				log.warn(String.format("Invalid key - Directory %s is no longer accessible.", directory.toString()));
+				watchKeysToDirectories.remove(key);
+			}
 
 		}
 	}
@@ -196,6 +203,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 				try {
 					key = watcher.take();
 				} catch (InterruptedException ex) {
+					log.error("Thread was interrupted unexpectedly", ex);
 					return;
 				}
 
