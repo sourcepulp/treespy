@@ -12,5 +12,7 @@ public interface TreeSpy {
 	public void start();
 	
 	public void stop();
+	
+	public void reset() throws IOException;
 
 }
