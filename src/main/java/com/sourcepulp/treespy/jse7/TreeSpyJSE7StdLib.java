@@ -43,7 +43,7 @@ import com.sourcepulp.treespy.TreeSpyListener;
  */
 public class TreeSpyJSE7StdLib implements TreeSpy {
 
-	private final Logger log = LoggerFactory.getLogger(TreeSpy.class);
+	private static final Logger log = LoggerFactory.getLogger(TreeSpy.class);
 
 	private WatchService watcher;
 
@@ -61,8 +61,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * @param executor
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(Executor executor) throws IOException {
+	public TreeSpyJSE7StdLib(Executor executor, WatchService watcher) throws IOException {
 		this.executor = executor;
+		this.watcher = watcher;
 		reset();
 	}
 
