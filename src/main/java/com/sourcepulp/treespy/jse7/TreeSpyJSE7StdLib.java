@@ -70,6 +70,14 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		reset();
 	}
 
+	/**
+	 * Constructs a directory spy using the provided executor to orchestrate the
+	 * background task, and the provided ExecutorService to execute callbacks.
+	 * 
+	 * @param daemonExecutor
+	 * @param callbackExecutorService
+	 * @throws IOException
+	 */
 	public TreeSpyJSE7StdLib(Executor daemonExecutor, ExecutorService callbackExecutorService) throws IOException {
 		this.daemonExecutor = daemonExecutor;
 		this.callbackExecutorService = callbackExecutorService;
