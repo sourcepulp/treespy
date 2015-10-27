@@ -15,7 +15,19 @@ public interface TreeSpy {
 	 *            A TreeSpyListener compliant callback.
 	 * @throws IOException
 	 */
-	public void watch(File directory, TreeSpyListener callback) throws IOException;
+	public void watchRecursive(File directory, TreeSpyListener callback) throws IOException;
+	
+	/**
+	 * Watches the specified directory and all subdirectories, invoking the
+	 * callback when a change is signalled.
+	 * 
+	 * @param directory
+	 *            The directory to be watched.
+	 * @param callback
+	 *            A TreeSpyListener compliant callback.
+	 * @throws IOException
+	 */
+	public void watchRecursive(File directory, TreeSpyListener callback, String... globs) throws IOException;
 
 	/**
 	 * Watches the specified directory, invoking the callback when a change is
@@ -28,7 +40,21 @@ public interface TreeSpy {
 	 *            A TreeSpyListener compliant callback.
 	 * @throws IOException
 	 */
-	public void watch(File directory, TreeSpyListener callback, boolean recurse) throws IOException;
+	public void watchJust(File directory, TreeSpyListener callback) throws IOException;
+	
+	/**
+	 * Watches the specified directory, invoking the callback when a change is
+	 * signalled. If recurse is set to true, then this will recursively watch
+	 * all subdirectories.
+	 * 
+	 * @param directory
+	 *            The directory to be watched.
+	 * @param callback
+	 *            A TreeSpyListener compliant callback.
+	 * @throws IOException
+	 */
+	public void watchJust(File directory, TreeSpyListener callback, String... globs) throws IOException;
+
 
 	/**
 	 * Manually starts the service.

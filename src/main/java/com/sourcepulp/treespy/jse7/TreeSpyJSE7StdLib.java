@@ -15,12 +15,14 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +52,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 	private ConcurrentMap<WatchKey, Path> watchKeysToDirectories;
 	private ConcurrentMap<Path, Set<TreeSpyListener>> directoriesToListeners;
+	private ConcurrentMap<TreeSpyListener, Set<PathMatcher>> callbacksToGlobMatchers;
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
@@ -93,30 +96,62 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		watcher = FileSystems.getDefault().newWatchService();
 		watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
 		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
+		callbacksToGlobMatchers = new ConcurrentHashMap<TreeSpyListener, Set<PathMatcher>>();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public void watch(File directory, TreeSpyListener callback) throws IOException {
+	public void watchRecursive(File directory, TreeSpyListener callback) throws IOException {
 		this.watch(directory, callback, true);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public void watch(File directory, TreeSpyListener callback, boolean recurse) throws IOException {
+	public void watchJust(File directory, TreeSpyListener callback) throws IOException {
+		this.watch(directory, callback, false);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public void watchRecursive(File directory, TreeSpyListener callback, String... globs) throws IOException {
+		registerGlobs(callback, globs);
+		this.watch(directory, callback, true);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public void watchJust(File directory, TreeSpyListener callback, String... globs) throws IOException {
+		registerGlobs(callback, globs);
+		this.watch(directory, callback, false);
+	}
+
+	private void watch(File directory, TreeSpyListener callback, boolean recursive) throws IOException {
 		if (!directory.isDirectory())
 			throw new IllegalArgumentException("Path must be a directory");
 
 		Path path = directory.toPath();
 		if (!isWatched(path))
-			register(path, callback, recurse);
+			register(path, callback, recursive);
 
 		if (!running.get())
 			start();
 
-		log.info(String.format("Watching %s%s", path.toString(), recurse ? " and subdirectories." : "."));
+		log.info(String.format("Watching %s%s", path.toString(), recursive ? " and subdirectories." : "."));
+	}
+
+	private void registerGlobs(TreeSpyListener callback, String[] globs) {
+		if (!callbacksToGlobMatchers.containsKey(callback))
+			callbacksToGlobMatchers.put(callback, new HashSet<PathMatcher>());
+
+		Set<PathMatcher> storedMatchers = callbacksToGlobMatchers.get(callback);
+		for (String glob : globs) {
+			PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob);
+			storedMatchers.add(matcher);
+		}
 	}
 
 	/**
@@ -233,7 +268,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 				// callbacks, this provides the option to pass them off to an
 				// executor service rather than clogging up the daemon thread.
 				if (this.runCallbacksOnDaemonThread) {
-					listener.onChange(child, eventType);
+					notify(listener, child, eventType);
 				} else {
 					notifyAsync(listener, child, eventType);
 				}
@@ -264,9 +299,32 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		callbackExecutorService.execute(new Runnable() {
 			@Override
 			public void run() {
-				listener.onChange(path, eventType);
+				TreeSpyJSE7StdLib.this.notify(listener, path, eventType);
 			}
 		});
+	}
+
+	private void notify(final TreeSpyListener listener, final Path path, final Events eventType) {
+
+		Set<PathMatcher> globs = callbacksToGlobMatchers.get(listener);
+
+		// If there's no globs, continue and notify. If there's globs, but no
+		// matches, continue and notify. Else, return and do nothing.
+		if (!(globs == null || globs.isEmpty())) {
+			if (!matches(globs, path)) {
+				return;
+			}
+		}
+
+		listener.onChange(path, eventType);
+	}
+
+	private boolean matches(Set<PathMatcher> globs, Path path) {
+		for (PathMatcher glob : globs) {
+			if (glob.matches(path))
+				return true;
+		}
+		return false;
 	}
 
 	/**

@@ -42,7 +42,7 @@ public class TreeSpyTest {
 
 		TreeSpy spy = SpyFactory.getSpy();
 
-		spy.watch(directory, (f, t) -> {
+		spy.watchRecursive(directory, (f, t) -> {
 			if (t == Events.MODIFY) {
 				log.info("Modification detected");
 				Assert.assertEquals(modifyFile.getAbsolutePath(), f.toString());
@@ -66,7 +66,7 @@ public class TreeSpyTest {
 		final String newFileName = "create.txt";
 		File newFile = new File(newFileName);
 
-		spy.watch(resourcesDir, (f, t) -> {
+		spy.watchRecursive(resourcesDir, (f, t) -> {
 			if (t == Events.CREATE) {
 				log.info("Creation detected");
 				Assert.assertEquals(newFileName, f.getFileName().toString());
@@ -85,7 +85,7 @@ public class TreeSpyTest {
 	public void testDelete() throws IOException, InterruptedException {
 		TreeSpy spy = SpyFactory.getSpy();
 		
-		spy.watch(modifyFile.getAbsoluteFile().getParentFile(), (f, t) -> {
+		spy.watchRecursive(modifyFile.getAbsoluteFile().getParentFile(), (f, t) -> {
 			if (t == Events.DELETE) {
 				log.info("Deletion detected");
 				Assert.assertEquals(modifyFile.getName(), f.getFileName().toString());
