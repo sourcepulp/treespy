@@ -61,11 +61,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * @param daemonExecutor
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher) throws IOException {
+	public TreeSpyJSE7StdLib(Executor daemonExecutor) throws IOException {
 		this.daemonExecutor = daemonExecutor;
-		this.watcher = watcher;
-		watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
-		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
+		reset();
 	}
 
 	/**
