@@ -32,8 +32,10 @@ public class TreeSpyTest {
 
 	@After
 	public void teardown() {
-		if(modifyFile.exists())
+		if (modifyFile.exists())
 			modifyFile.delete();
+
+		this.clearCaughtEvent();
 	}
 
 	@Test
@@ -43,15 +45,16 @@ public class TreeSpyTest {
 		TreeSpy spy = SpyFactory.getSpy();
 
 		spy.watchRecursive(directory, (f, t) -> {
-			if (t == Events.MODIFY) {
-				log.info("Modification detected");
-				Assert.assertEquals(modifyFile.getAbsolutePath(), f.toString());
-			}
+			log.info("Modification detected");
+			setCaughtEvent(f, t);
 		});
 
 		try {
 			write(modifyFile.toPath(), "hello");
 			await();
+
+			Assert.assertEquals(modifyFile.getAbsolutePath(), caughtFile.toString());
+			Assert.assertEquals(Events.MODIFY, caughtEvent);
 		} finally {
 			spy.stop();
 		}
@@ -67,36 +70,102 @@ public class TreeSpyTest {
 		File newFile = new File(newFileName);
 
 		spy.watchRecursive(resourcesDir, (f, t) -> {
-			if (t == Events.CREATE) {
-				log.info("Creation detected");
-				Assert.assertEquals(newFileName, f.getFileName().toString());
-			}
+			log.info("Creation detected");
+			setCaughtEvent(f, t);
 		});
 		try {
 			newFile.createNewFile();
 			await();
+
+			Assert.assertEquals(newFileName, caughtFile.getFileName().toString());
+			Assert.assertEquals(Events.CREATE, caughtEvent);
 		} finally {
 			newFile.delete();
 			spy.stop();
 		}
 	}
-	
+
+	@Test
+	public void testValidGlobCreate() throws IOException, InterruptedException {
+
+		File resourcesDir = new File(System.getProperty("user.dir"));
+		TreeSpy spy = SpyFactory.getSpy();
+
+		final String newFileName = "create.txt";
+		File newFile = new File(newFileName);
+
+		spy.watchRecursive(resourcesDir, (f, t) -> {
+			log.info("Creation detected");
+			setCaughtEvent(f, t);
+		} , "*.txt");
+		try {
+			newFile.createNewFile();
+			await();
+
+			Assert.assertEquals(newFileName, caughtFile.getFileName().toString());
+			Assert.assertEquals(Events.CREATE, caughtEvent);
+		} finally {
+			newFile.delete();
+			spy.stop();
+		}
+	}
+
+	@Test
+	public void testInvalidGlobCreate() throws IOException, InterruptedException {
+
+		File resourcesDir = new File(System.getProperty("user.dir"));
+		TreeSpy spy = SpyFactory.getSpy();
+
+		final String newFileName = "create.txt";
+		File newFile = new File(newFileName);
+
+		spy.watchRecursive(resourcesDir, (f, t) -> {
+			log.info("Creation detected");
+			setCaughtEvent(f, t);
+
+		} , "}}}+==--$%566&(6");
+		try {
+			newFile.createNewFile();
+			await();
+
+			Assert.assertEquals(null, caughtFile);
+			Assert.assertEquals(null, caughtEvent);
+		} finally {
+			newFile.delete();
+			spy.stop();
+		}
+	}
+
 	@Test
 	public void testDelete() throws IOException, InterruptedException {
 		TreeSpy spy = SpyFactory.getSpy();
-		
+
 		spy.watchRecursive(modifyFile.getAbsoluteFile().getParentFile(), (f, t) -> {
-			if (t == Events.DELETE) {
-				log.info("Deletion detected");
-				Assert.assertEquals(modifyFile.getName(), f.getFileName().toString());
-			}
+			log.info("Deletion detected");
+			setCaughtEvent(f, t);
 		});
 		try {
 			modifyFile.delete();
 			await();
+			Assert.assertEquals(modifyFile.getName(), caughtFile.getFileName().toString());
+			Assert.assertEquals(Events.DELETE, caughtEvent);
 		} finally {
 			spy.stop();
+			clearCaughtEvent();
 		}
+	}
+
+	private Path caughtFile;
+	private Events caughtEvent;
+
+	private void setCaughtEvent(Path file, Events eventType) {
+		this.caughtFile = file;
+		this.caughtEvent = eventType;
+	}
+
+	private void clearCaughtEvent() {
+		this.caughtFile = null;
+		this.caughtEvent = null;
 	}
 
 	private void write(Path file, String s) throws IOException {
