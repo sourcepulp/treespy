@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -53,6 +54,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	private AtomicBoolean running = new AtomicBoolean(false);
 
 	private Executor daemonExecutor;
+	private ExecutorService callbackExecutorService;
+
+	private boolean runCallbacksOnDaemonThread = true;
 
 	/**
 	 * Constructs a directory spy using the provided executor to orchestrate the
@@ -63,6 +67,13 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 */
 	public TreeSpyJSE7StdLib(Executor daemonExecutor) throws IOException {
 		this.daemonExecutor = daemonExecutor;
+		reset();
+	}
+
+	public TreeSpyJSE7StdLib(Executor daemonExecutor, ExecutorService callbackExecutorService) throws IOException {
+		this.daemonExecutor = daemonExecutor;
+		this.callbackExecutorService = callbackExecutorService;
+		runCallbacksOnDaemonThread = false;
 		reset();
 	}
 
@@ -208,7 +219,17 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 			boolean newDirectory = kind == ENTRY_CREATE && Files.isDirectory(child, NOFOLLOW_LINKS);
 
 			for (TreeSpyListener listener : listeners) {
-				listener.onChange(child, Events.kindToEvent(kind));
+
+				Events eventType = Events.kindToEvent(kind);
+
+				// If users have particularly heavy or frequent tasks in
+				// callbacks, this provides the option to pass them off to an
+				// executor service rather than clogging up the daemon thread.
+				if (this.runCallbacksOnDaemonThread) {
+					listener.onChange(child, eventType);
+				} else {
+					notifyAsync(listener, child, eventType);
+				}
 
 				// If a new directory was created, register it and any
 				// subdirectories.
@@ -230,6 +251,15 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 			}
 
 		}
+	}
+
+	private void notifyAsync(final TreeSpyListener listener, final Path path, final Events eventType) {
+		callbackExecutorService.execute(new Runnable() {
+			@Override
+			public void run() {
+				listener.onChange(path, eventType);
+			}
+		});
 	}
 
 	/**
@@ -280,7 +310,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 		public void run() {
 			while (running.get()) {
-				
+
 				WatchKey key;
 				try {
 					key = spy.watcher.take();
