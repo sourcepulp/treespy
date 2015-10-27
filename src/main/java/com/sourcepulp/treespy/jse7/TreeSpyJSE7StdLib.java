@@ -79,10 +79,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * @throws IOException
 	 */
 	public TreeSpyJSE7StdLib(Executor daemonExecutor, ExecutorService callbackExecutorService) throws IOException {
-		this.daemonExecutor = daemonExecutor;
+		this(daemonExecutor);
 		this.callbackExecutorService = callbackExecutorService;
 		runCallbacksOnDaemonThread = false;
-		reset();
 	}
 
 	/**
