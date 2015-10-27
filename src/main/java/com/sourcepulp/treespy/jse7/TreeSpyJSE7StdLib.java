@@ -149,6 +149,8 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 		Set<PathMatcher> storedMatchers = callbacksToGlobMatchers.get(callback);
 		for (String glob : globs) {
+			if(!glob.startsWith("glob:"))
+				glob = "glob:" + glob;
 			PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob);
 			storedMatchers.add(matcher);
 		}
