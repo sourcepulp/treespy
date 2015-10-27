@@ -64,7 +64,8 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	public TreeSpyJSE7StdLib(Executor executor, WatchService watcher) throws IOException {
 		this.executor = executor;
 		this.watcher = watcher;
-		reset();
+		watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
+		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
 	}
 
 	/**
@@ -281,9 +282,10 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 		public void run() {
 			while (running.get()) {
+				
 				WatchKey key;
 				try {
-					key = watcher.take();
+					key = spy.watcher.take();
 				} catch (InterruptedException ex) {
 					log.error("Thread was interrupted unexpectedly", ex);
 					return;
