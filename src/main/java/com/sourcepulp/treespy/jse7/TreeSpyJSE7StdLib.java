@@ -52,17 +52,17 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
-	private Executor executor;
+	private Executor daemonExecutor;
 
 	/**
 	 * Constructs a directory spy using the provided executor to orchestrate the
 	 * background task.
 	 * 
-	 * @param executor
+	 * @param daemonExecutor
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(Executor executor, WatchService watcher) throws IOException {
-		this.executor = executor;
+	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher) throws IOException {
+		this.daemonExecutor = daemonExecutor;
 		this.watcher = watcher;
 		watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
 		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
@@ -250,7 +250,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * {@inheritDoc}
 	 */
 	public void start() {
-		executor.execute(new WatchServiceRunnable(this));
+		daemonExecutor.execute(new WatchServiceRunnable(this));
 		running.set(true);
 		log.info("TreeSpy started spying.");
 	}
