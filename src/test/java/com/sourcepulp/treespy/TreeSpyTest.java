@@ -3,28 +3,34 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.WatchService;
+import java.util.concurrent.Executor;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.sourcepulp.treespy.jse7.TreeSpyJSE7StdLib;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest 
+public class TreeSpyTest 
 {
-	TreeSpy spy;
+	TreeSpyJSE7StdLib spy;
+	String dirName = System.getProperty("user.dir");
 	
 	@Before
 	public void setup() throws IOException {
-		spy = SpyFactory.getSpy();
+		WatchService watcher = Mockito.mock(WatchService.class);
+		Executor executor = Mockito.mock(Executor.class);
+		spy = new TreeSpyJSE7StdLib(executor, watcher);
 	}
 	
     @Test
     public void testApp() throws IOException
-    {
-    	String homeDir = System.getProperty("user.home");
-    	
-    	File directory = new File(homeDir);
+    {	
+    	File directory = new File(dirName);
     	
     	spy.watch(directory, (f,t) -> {
     		if(t == Events.CREATE) {
