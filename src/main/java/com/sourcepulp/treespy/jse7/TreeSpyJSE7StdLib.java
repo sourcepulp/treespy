@@ -226,7 +226,6 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 				directoriesToListeners.get(dir).add(listener);
 
-				log.debug("Registering " + dir.toString());
 				return FileVisitResult.CONTINUE;
 			}
 
