@@ -2,7 +2,7 @@
 Simplified, zero dependency recursive directory watching API for Java SE 7+
 
 ### Watch a directory recursively
-    
+```java
     TreeSpy spy = SpyFactory.getSpy();
     
     String directory = "/home/wfaithfull"
@@ -12,9 +12,9 @@ Simplified, zero dependency recursive directory watching API for Java SE 7+
 	spy.watchRecursive(home, (changedFile, eventType) -> {
 		System.out.println(String.format("File %s changed", changedFile));
 	});
-
+```
 ### Watch a directory recursively with a glob pattern
-
+```java
 	TreeSpy spy = SpyFactory.getSpy();
     
     String directory = "/home/wfaithfull"
@@ -24,3 +24,4 @@ Simplified, zero dependency recursive directory watching API for Java SE 7+
 	spy.watchRecursive(home, (changedFile, eventType) -> {
 		System.out.println(String.format("File %s changed", changedFile));
 	}, "glob:*.java", "glob:*.txt");
+```
