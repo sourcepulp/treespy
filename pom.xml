@@ -4,11 +4,11 @@
 
 	<groupId>com.sourcepulp</groupId>
 	<artifactId>treespy</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<packaging>jar</packaging>
 
 	<name>treespy</name>
-	<url>http://maven.apache.org</url>
+	<url>https://github.com/sourcepulp/treespy</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
