@@ -329,8 +329,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	}
 
 	private boolean matches(Set<PathMatcher> globs, Path path) {
+		Path file = path.getFileName();
 		for (PathMatcher glob : globs) {
-			if (glob.matches(path))
+			if (glob.matches(file))
 				return true;
 		}
 		return false;
