@@ -319,16 +319,13 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	private void notify(final TreeSpyListener listener, final Path path, final Events eventType) {
 
 		Set<PathMatcher> globs = callbacksToGlobMatchers.get(listener);
+		
+		boolean noGlobs = globs == null || globs.isEmpty();
 
-		// If there's no globs, continue and notify. If there's globs, but no
-		// matches, continue and notify. Else, return and do nothing.
-		if (!(globs == null || globs.isEmpty())) {
-			if (!matches(globs, path)) {
-				return;
-			}
+		// LHS evaluated first. If there are NO globs, notify. If there ARE globs, then matches also needs to return true in order to notify.
+		if (noGlobs || matches(globs, path)) {
+			listener.onChange(path, eventType);
 		}
-
-		listener.onChange(path, eventType);
 	}
 
 	private boolean matches(Set<PathMatcher> globs, Path path) {
