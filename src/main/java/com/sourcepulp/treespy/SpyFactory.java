@@ -1,6 +1,8 @@
 package com.sourcepulp.treespy;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.WatchService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 
@@ -17,7 +19,7 @@ public class SpyFactory {
 	 * @throws IOException
 	 */
 	public static TreeSpy getSpy() throws IOException {
-		return new TreeSpyJSE7StdLib(getExecutor());
+		return new TreeSpyJSE7StdLib(getExecutor(), getWatchService());
 	}
 
 	/**
@@ -31,7 +33,11 @@ public class SpyFactory {
 	 * @throws IOException
 	 */
 	public static TreeSpy getSpy(ExecutorService callbackExecutorService) throws IOException {
-		return new TreeSpyJSE7StdLib(getExecutor(), callbackExecutorService);
+		return new TreeSpyJSE7StdLib(getExecutor(), getWatchService(), callbackExecutorService);
+	}
+	
+	private static WatchService getWatchService() throws IOException {
+		return FileSystems.getDefault().newWatchService();
 	}
 
 	private static ThreadFactory getThreadFactory() {

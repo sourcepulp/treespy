@@ -102,6 +102,7 @@ public class TreeSpyTest {
 			newFile.createNewFile();
 			await();
 
+			Assert.assertNotNull(caughtFile);
 			Assert.assertEquals(newFileName, caughtFile.getFileName().toString());
 			Assert.assertEquals(Events.CREATE, caughtEvent);
 		} finally {

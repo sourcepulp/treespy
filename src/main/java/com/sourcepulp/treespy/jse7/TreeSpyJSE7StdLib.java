@@ -68,8 +68,9 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * @param daemonExecutor
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(Executor daemonExecutor) throws IOException {
+	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher) throws IOException {
 		this.daemonExecutor = daemonExecutor;
+		this.watcher = watcher;
 		reset();
 	}
 
@@ -81,9 +82,10 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * @param callbackExecutorService
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(Executor daemonExecutor, ExecutorService callbackExecutorService) throws IOException {
-		this(daemonExecutor);
+	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher, ExecutorService callbackExecutorService) throws IOException {
+		this(daemonExecutor, watcher);
 		this.callbackExecutorService = callbackExecutorService;
+		this.watcher = watcher;
 		runCallbacksOnDaemonThread = false;
 	}
 
@@ -93,7 +95,10 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	public void reset() throws IOException {
 		stop();
 
-		watcher = FileSystems.getDefault().newWatchService();
+		for(WatchKey key : watchKeysToDirectories.keySet()) {
+			key.cancel();
+		}
+		
 		watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
 		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
 		callbacksToGlobMatchers = new ConcurrentHashMap<TreeSpyListener, Set<PathMatcher>>();
