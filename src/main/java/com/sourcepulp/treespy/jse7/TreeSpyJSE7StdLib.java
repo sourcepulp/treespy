@@ -71,7 +71,11 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher) throws IOException {
 		this.daemonExecutor = daemonExecutor;
 		this.watcher = watcher;
-		reset();
+
+		// Initialise maps
+		this.watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
+		this.directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
+		this.callbacksToGlobMatchers = new ConcurrentHashMap<TreeSpyListener, Set<PathMatcher>>();
 	}
 
 	/**
@@ -82,10 +86,12 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	 * @param callbackExecutorService
 	 * @throws IOException
 	 */
-	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher, ExecutorService callbackExecutorService) throws IOException {
+	public TreeSpyJSE7StdLib(Executor daemonExecutor, WatchService watcher, ExecutorService callbackExecutorService)
+			throws IOException {
 		this(daemonExecutor, watcher);
 		this.callbackExecutorService = callbackExecutorService;
-		this.watcher = watcher;
+		// In the default case, we don't use an executorservice, it needs to be
+		// explicitly told.
 		runCallbacksOnDaemonThread = false;
 	}
 
@@ -95,10 +101,10 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 	public void reset() throws IOException {
 		stop();
 
-		for(WatchKey key : watchKeysToDirectories.keySet()) {
+		for (WatchKey key : watchKeysToDirectories.keySet()) {
 			key.cancel();
 		}
-		
+
 		watchKeysToDirectories = new ConcurrentHashMap<WatchKey, Path>();
 		directoriesToListeners = new ConcurrentHashMap<Path, Set<TreeSpyListener>>();
 		callbacksToGlobMatchers = new ConcurrentHashMap<TreeSpyListener, Set<PathMatcher>>();
@@ -154,7 +160,7 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 
 		Set<PathMatcher> storedMatchers = callbacksToGlobMatchers.get(callback);
 		for (String glob : globs) {
-			if(!glob.startsWith("glob:"))
+			if (!glob.startsWith("glob:"))
 				glob = "glob:" + glob;
 			PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob);
 			storedMatchers.add(matcher);

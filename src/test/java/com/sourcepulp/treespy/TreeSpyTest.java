@@ -175,6 +175,12 @@ public class TreeSpyTest {
 		}
 	}
 
+	/**
+	 * Asyncronously wait a fixed amount of time for the events to be
+	 * registered.
+	 * 
+	 * @throws InterruptedException
+	 */
 	private void await() throws InterruptedException {
 		countDownLatch.await(WAIT_TIME_MILLIS, TimeUnit.MILLISECONDS);
 	}
