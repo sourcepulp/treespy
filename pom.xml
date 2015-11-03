@@ -28,9 +28,9 @@
 	</developers>
 
 	<scm>
-		<connection>git:git@github.com:sourcepulp/treespy.git</connection>
+		<connection>scm:git:git@github.com:sourcepulp/treespy.git</connection>
 		<developerConnection>scm:git:git@github.com:sourcepulp/treespy.git</developerConnection>
-		<url>git@github.com:sourcepulp/treespy.git</url>
+		<url>scm:git:git@github.com:sourcepulp/treespy.git</url>
 	</scm>
 
 	<properties>
