@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -13,19 +17,69 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@RunWith(Parameterized.class)
 public class TreeSpyTest {
+
+	public TreeSpyTest(int param) {	}
+
 	private final static Logger log = LoggerFactory.getLogger(TreeSpyTest.class);
 
 	final static int WAIT_TIME_MILLIS = 500;
+	private final static int NUM_RUNS = 5;	
 
 	private final CountDownLatch countDownLatch = new CountDownLatch(1);
 	private File modifyFile;
+	private List<CaughtFileEvent> caughtEvents;
+
+	private class CaughtFileEvent {
+
+		private Path path;
+		private Events event;
+		private LocalDateTime timestamp;
+
+		public CaughtFileEvent(Path file, Events event) {
+			this.path = file;
+			this.event = event;
+			this.timestamp = LocalDateTime.now();
+		}
+
+		@SuppressWarnings("unused")
+		public Path getPath() {
+			return path;
+		}
+
+		public Events getEvent() {
+			return event;
+		}
+
+		public String getFileName() {
+			return path.getFileName().toString();
+		}
+
+		@SuppressWarnings("unused")
+		public LocalDateTime getTimeStamp() {
+			return timestamp;
+		}
+	}
+
+	@Parameters
+	public static Collection<Object[]> generateParams() {
+		List<Object[]> params = new ArrayList<Object[]>();
+		for (int i = 1; i <= NUM_RUNS; i++) {
+			params.add(new Object[] { i });
+		}
+		return params;
+	}
 
 	@Before
 	public void setup() throws IOException {
+		caughtEvents = new ArrayList<CaughtFileEvent>();
 		modifyFile = new File("testfile.txt");
 		modifyFile.createNewFile();
 	}
@@ -45,7 +99,6 @@ public class TreeSpyTest {
 		TreeSpy spy = SpyFactory.getSpy();
 
 		spy.watchRecursive(directory, (f, t) -> {
-			log.info("Modification detected");
 			setCaughtEvent(f, t);
 		});
 
@@ -53,8 +106,11 @@ public class TreeSpyTest {
 			write(modifyFile.toPath(), "hello");
 			await();
 
-			Assert.assertEquals(modifyFile.getAbsolutePath(), caughtFile.toString());
-			Assert.assertEquals(Events.MODIFY, caughtEvent);
+			Assert.assertNotEquals(0, caughtEvents.size());
+			caughtEvents.forEach(f -> {
+				Assert.assertEquals(modifyFile.getName(), f.getFileName());
+				Assert.assertEquals(Events.MODIFY, f.getEvent());
+			});
 		} finally {
 			spy.stop();
 		}
@@ -70,15 +126,17 @@ public class TreeSpyTest {
 		File newFile = new File(newFileName);
 
 		spy.watchRecursive(resourcesDir, (f, t) -> {
-			log.info("Creation detected");
 			setCaughtEvent(f, t);
 		});
 		try {
 			newFile.createNewFile();
 			await();
 
-			Assert.assertEquals(newFileName, caughtFile.getFileName().toString());
-			Assert.assertEquals(Events.CREATE, caughtEvent);
+			Assert.assertNotEquals(0, caughtEvents.size());
+			caughtEvents.forEach(f -> {
+				Assert.assertEquals(newFileName, f.getFileName());
+				Assert.assertEquals(Events.CREATE, f.getEvent());
+			});
 		} finally {
 			newFile.delete();
 			spy.stop();
@@ -95,16 +153,18 @@ public class TreeSpyTest {
 		File newFile = new File(newFileName);
 
 		spy.watchRecursive(resourcesDir, (f, t) -> {
-			log.info("Creation detected");
 			setCaughtEvent(f, t);
 		} , "*.txt");
 		try {
 			newFile.createNewFile();
 			await();
 
-			Assert.assertNotNull(caughtFile);
-			Assert.assertEquals(newFileName, caughtFile.getFileName().toString());
-			Assert.assertEquals(Events.CREATE, caughtEvent);
+			Assert.assertNotEquals(0, caughtEvents.size());
+			caughtEvents.forEach(f -> {
+				Assert.assertEquals(newFileName, f.getFileName());
+				Assert.assertEquals(Events.CREATE, f.getEvent());
+			});
+
 		} finally {
 			newFile.delete();
 			spy.stop();
@@ -121,7 +181,6 @@ public class TreeSpyTest {
 		File newFile = new File(newFileName);
 
 		spy.watchRecursive(resourcesDir, (f, t) -> {
-			log.info("Creation detected");
 			setCaughtEvent(f, t);
 
 		} , "}}}+==--$%566&(6");
@@ -129,8 +188,7 @@ public class TreeSpyTest {
 			newFile.createNewFile();
 			await();
 
-			Assert.assertEquals(null, caughtFile);
-			Assert.assertEquals(null, caughtEvent);
+			Assert.assertEquals(0, caughtEvents.size());
 		} finally {
 			newFile.delete();
 			spy.stop();
@@ -142,37 +200,40 @@ public class TreeSpyTest {
 		TreeSpy spy = SpyFactory.getSpy();
 
 		spy.watchRecursive(modifyFile.getAbsoluteFile().getParentFile(), (f, t) -> {
-			log.info("Deletion detected");
 			setCaughtEvent(f, t);
 		});
 		try {
 			modifyFile.delete();
 			await();
-			Assert.assertEquals(modifyFile.getName(), caughtFile.getFileName().toString());
-			Assert.assertEquals(Events.DELETE, caughtEvent);
+			Assert.assertNotEquals(0, caughtEvents.size());
+
+			CaughtFileEvent f = caughtEvents.get(caughtEvents.size() - 1);
+			Assert.assertEquals(modifyFile.getName(), f.getFileName());
+			Assert.assertEquals(Events.DELETE, f.getEvent());
 		} finally {
 			spy.stop();
 			clearCaughtEvent();
 		}
 	}
 
-	private Path caughtFile;
-	private Events caughtEvent;
-
 	private void setCaughtEvent(Path file, Events eventType) {
-		this.caughtFile = file;
-		this.caughtEvent = eventType;
+		caughtEvents.add(new CaughtFileEvent(file, eventType));
 	}
 
 	private void clearCaughtEvent() {
-		this.caughtFile = null;
-		this.caughtEvent = null;
+		caughtEvents.clear();
 	}
 
 	private void write(Path file, String s) throws IOException {
 		try (BufferedWriter bw = Files.newBufferedWriter(file, Charset.defaultCharset())) {
 			bw.write(s);
 		}
+	}
+
+	private void logCaughtEvents() {
+		caughtEvents.forEach(f -> {
+			log.info(String.format("%s => %s", f.getFileName(), f.event.toString()));
+		});
 	}
 
 	/**
@@ -183,6 +244,7 @@ public class TreeSpyTest {
 	 */
 	private void await() throws InterruptedException {
 		countDownLatch.await(WAIT_TIME_MILLIS, TimeUnit.MILLISECONDS);
+		logCaughtEvents();
 	}
 
 }
