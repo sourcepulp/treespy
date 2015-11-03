@@ -140,6 +140,18 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		this.watch(directory, callback, false);
 	}
 
+	/**
+	 * Actual impelementation method for directory watching.
+	 * 
+	 * @param directory
+	 *            The directory to watch.
+	 * @param callback
+	 *            The listener to be notified in case of events.
+	 * @param recursive
+	 *            Whether or not to recursuively watch subdirectories.
+	 * @throws IOException
+	 *             If the filesystem objects to registration.
+	 */
 	private void watch(File directory, TreeSpyListener callback, boolean recursive) throws IOException {
 		if (!directory.isDirectory())
 			throw new IllegalArgumentException("Path must be a directory");
@@ -154,6 +166,14 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		log.info(String.format("Watching %s%s", path.toString(), recursive ? " and subdirectories." : "."));
 	}
 
+	/**
+	 * Registers a mapping between the specified listener and it's set of globs.
+	 * 
+	 * @param callback
+	 *            The listener to be notified pending evaluation of the globs.
+	 * @param globs
+	 *            The globs with which to restrict this listener.
+	 */
 	private void registerGlobs(TreeSpyListener callback, String[] globs) {
 		if (!callbacksToGlobMatchers.containsKey(callback))
 			callbacksToGlobMatchers.put(callback, new HashSet<PathMatcher>());
@@ -307,6 +327,17 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		}
 	}
 
+	/**
+	 * Notifies the specified listener with the data specified. The notification
+	 * work is done on the thread provided by the callback ExecutorService.
+	 * 
+	 * @param listener
+	 *            The listener to notify.
+	 * @param path
+	 *            The path with which to notify the listener.
+	 * @param eventType
+	 *            The type of event with which to notify the listener.
+	 */
 	private void notifyAsync(final TreeSpyListener listener, final Path path, final Events eventType) {
 		callbackExecutorService.execute(new Runnable() {
 			@Override
@@ -316,6 +347,17 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		});
 	}
 
+	/**
+	 * Notifies the specified listener with the data specified. The notification
+	 * work is done synchronously, on the calling thread.
+	 * 
+	 * @param listener
+	 *            The listener to notify.
+	 * @param path
+	 *            The path with which to notify the listener.
+	 * @param eventType
+	 *            The type of event with which to notify the listener.
+	 */
 	private void notify(final TreeSpyListener listener, final Path path, final Events eventType) {
 
 		Set<PathMatcher> globs = callbacksToGlobMatchers.get(listener);
@@ -329,6 +371,15 @@ public class TreeSpyJSE7StdLib implements TreeSpy {
 		}
 	}
 
+	/**
+	 * Checks whether any of the globs match the given path.
+	 * 
+	 * @param globs
+	 *            A set of pathmatchers representing the globs to evaluate.
+	 * @param path
+	 *            The path to be evaluated.
+	 * @return True, if any of the globs match the path.
+	 */
 	private boolean matches(Set<PathMatcher> globs, Path path) {
 		Path file = path.getFileName();
 		for (PathMatcher glob : globs) {
