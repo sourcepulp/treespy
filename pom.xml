@@ -29,7 +29,7 @@
 
 	<scm>
 		<connection>scm:git:git@github.com:sourcepulp/treespy.git</connection>
-		<developerConnection>scm:git:git@github.com:sourcepulp/treespy.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com:sourcepulp/treespy.git</developerConnection>
 		<url>scm:git:git@github.com:sourcepulp/treespy.git</url>
 	</scm>
 
