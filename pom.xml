@@ -180,8 +180,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.3</version>
 				<configuration>
-					<source>${compileSource}</source>
-					<target>${compileSource}</target>
+					<source>${testCompileSource}</source>
+					<target>${testCompileSource}</target>
 				</configuration>
 			</plugin>
 		</plugins>
