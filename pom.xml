@@ -36,8 +36,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<compileSource>1.7</compileSource>
-		<testCompileSource>1.8</testCompileSource>
+        <maven.compiler.version>1.8</maven.compiler.version>
+        <maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
 	<dependencies>
