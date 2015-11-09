@@ -3,7 +3,7 @@
 
 	<groupId>com.sourcepulp</groupId>
 	<artifactId>treespy</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
@@ -30,7 +30,7 @@
 		<connection>scm:git:git@github.com:sourcepulp/treespy.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/sourcepulp/treespy.git</developerConnection>
 		<url>scm:git:git@github.com:sourcepulp/treespy.git</url>
-	  <tag>treespy-0.1.1</tag>
+	  <tag>HEAD</tag>
   </scm>
 
 	<properties>
