@@ -1,9 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.sourcepulp</groupId>
 	<artifactId>treespy</artifactId>
-	<version>0.1.2-SNAPSHOT</version>
+	<version>0.1.1</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
@@ -28,10 +29,10 @@
 
 	<scm>
 		<connection>scm:git:git@github.com:sourcepulp/treespy.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/sourcepulp/treespy.git</developerConnection>
+		<developerConnection>scm:git:ssh://git@github.com/sourcepulp/treespy.git</developerConnection>
 		<url>scm:git:git@github.com:sourcepulp/treespy.git</url>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -134,29 +135,6 @@
 							<autoReleaseAfterClose>true</autoReleaseAfterClose>
 						</configuration>
 					</plugin>
-					<!-- Compile test sources against 1.8 to allow lambda tests -->
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.3</version>
-						<configuration>
-							<source>${compileSource}</source>
-							<target>${compileSource}</target>
-						</configuration>
-						<executions>
-							<execution>
-								<id>test-compile</id>
-								<phase>process-test-sources</phase>
-								<goals>
-									<goal>testCompile</goal>
-								</goals>
-								<configuration>
-									<source>${testCompileSource}</source>
-									<target>${testCompileSource}</target>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
 				</plugins>
 			</build>
 		</profile>
@@ -175,28 +153,6 @@
 					<goals>deploy</goals>
 				</configuration>
 			</plugin>
-			<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.3</version>
-						<configuration>
-							<source>${compileSource}</source>
-							<target>${compileSource}</target>
-						</configuration>
-						<executions>
-							<execution>
-								<id>test-compile</id>
-								<phase>process-test-sources</phase>
-								<goals>
-									<goal>testCompile</goal>
-								</goals>
-								<configuration>
-									<source>${testCompileSource}</source>
-									<target>${testCompileSource}</target>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
 		</plugins>
 	</build>
 
