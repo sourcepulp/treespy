@@ -176,14 +176,27 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
-				<configuration>
-					<source>${testCompileSource}</source>
-					<target>${testCompileSource}</target>
-				</configuration>
-			</plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<version>3.3</version>
+						<configuration>
+							<source>${compileSource}</source>
+							<target>${compileSource}</target>
+						</configuration>
+						<executions>
+							<execution>
+								<id>test-compile</id>
+								<phase>process-test-sources</phase>
+								<goals>
+									<goal>testCompile</goal>
+								</goals>
+								<configuration>
+									<source>${testCompileSource}</source>
+									<target>${testCompileSource}</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 		</plugins>
 	</build>
 
